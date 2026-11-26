@@ -17,17 +17,30 @@ const entry =
 
 // The gate counts the file, not the console: keep the line to one line,
 // 1–200 characters, and refuse to ship anything that breaks the cap.
-if (entry.length < 1 || entry.length > 200) {
-  throw new Error(`entry must be 1-200 characters, got ${entry.length}`);
+function validateEntry(text: string): void {
+  if (text.length < 1 || text.length > 200) {
+    throw new Error(`entry must be 1-200 characters, got ${text.length}`);
+  }
+  if (text.includes("\n")) {
+    throw new Error("entry must be a single line");
+  }
 }
-if (entry.includes("\n")) {
-  throw new Error("entry must be a single line");
+
+validateEntry(entry);
+
+// Print the line and persist it for the grader: write the line exactly
+// as printed, with no trailing newline, so the gate counts it as-is.
+// The grader reads /output/entry.txt by default; OUTPUT_DIR lets a local
+// run point the file elsewhere without touching the entry itself.
+function resolveOutDir(): string {
+  const override = process.env.OUTPUT_DIR?.trim();
+  return override ? override : "/output";
+}
+
+function writeEntry(text: string, outDir: string): void {
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, "entry.txt"), text, "utf8");
 }
 
 console.log(entry);
-
-// The grader reads /output/entry.txt: write the line exactly as printed,
-// with no trailing newline, so the gate counts it as-is.
-const outDir = process.env.OUTPUT_DIR ?? "/output";
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), entry, "utf8");
+writeEntry(entry, resolveOutDir());
